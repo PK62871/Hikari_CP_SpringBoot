@@ -1,0 +1,162 @@
+HikariCP Connection Pool in Spring Boot
+###############################################
+1. Overview
+
+HikariCP is a high-performance JDBC connection pool widely used in Spring Boot applications. It manages database connections efficiently to improve performance, stability, and resource utilization.
+
+Key Benefits:
+
+Reduces connection creation overhead
+
+Improves application performance
+
+Provides connection leak detection
+
+Lightweight and fast compared to other connection pools
+
+2. Why Use Connection Pooling?
+########################################
+
+Performance: Creating a new database connection for each query is expensive. Pooling keeps ready-to-use connections.
+
+Resource Management: Limits the number of concurrent connections and prevents database overload.
+
+Stability: Handles timeouts, retries, and leaks efficiently.
+
+Analogy: Think of it like a taxi stand—taxis (connections) are always ready for passengers (queries), reducing wait times.
+
+3. How HikariCP Works Internally
+#######################################
+
+Connection Pool Management:
+##################################
+
+Maintains idle and active connections.
+Keeps minimum idle connections ready for fast access.
+Borrowing a Connectio
+Checks idle connections → returns one if available.
+If none are idle and pool < max → creates a new connection.
+If pool exhausted → waits up to connectionTimeout.
+Returning a Connection:
+After use, connections are returned to the pool, not closed.
+Validated using JDBC isValid() or optional connectionTestQuery.
+
+Leak Detection: Identifies connections not returned within leakDetectionThreshold.
+Housekeeping Thread: Periodically removes idle, expired, or invalid connections.
+
+4. Spring Boot Integration
+###########################
+
+Spring Boot auto-configures HikariCP for JDBC and Spring Data JPA.
+Default properties can be overridden in application.properties or application.yml.
+
+##########################################
+Example (application.properties):
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/mydb
+spring.datasource.username=postgres
+spring.datasource.password=secret
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# HikariCP settings
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.minimum-idle=5
+spring.datasource.hikari.idle-timeout=30000
+spring.datasource.hikari.connection-timeout=30000
+spring.datasource.hikari.max-lifetime=1800000
+spring.datasource.hikari.leak-detection-threshold=2000
+spring.datasource.hikari.pool-name=MyHikariPool
+
+5. Important HikariCP Properties
+#######################################
+Property	Description	Default
+######################################
+
+maximumPoolSize	Max connections in pool	10
+minimumIdle	Min idle connections maintained	Same as maximumPoolSize
+connectionTimeout	Max wait time for a connection	30,000 ms
+idleTimeout	Time after which idle connections are removed	600,000 ms
+maxLifetime	Max life of a connection	1,800,000 ms (30 min)
+leakDetectionThreshold	Detect unreturned connections	0 (disabled)
+poolName	Pool name	HikariPool-1
+validationTimeout	Connection validation timeout	5,000 ms
+connectionTestQuery	Optional SQL query to validate connections	Not required for most DBs
+
+
+6. Customization Examples
+###################################
+
+Programmatic Bean Configuration
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import javax.sql.DataSource;
+
+@Configuration
+public class DataSourceConfig {
+
+    @Bean
+    public DataSource dataSource() {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl("jdbc:postgresql://localhost:5432/mydb");
+        config.setUsername("postgres");
+        config.setPassword("secret");
+        config.setMaximumPoolSize(20);
+        config.setPoolName("CustomHikariPool");
+        config.setLeakDetectionThreshold(2000);
+        return new HikariDataSource(config);
+    }
+}
+
+Best Practices
+#####################################
+
+Pool Size: Set based on expected concurrent queries + buffer.
+Leak Detection: Enable during development to catch unreturned connections.
+Idle Timeout & Max Lifetime: idleTimeout < maxLifetime to avoid stale connections.
+Connection Validation: Usually automatic via JDBC isValid().
+Monitoring: Use Spring Boot Actuator metrics:
+management.endpoints.web.exposure.include=health,metrics
+
+7. Internal Workflow
+########################################
+
+Application requests a connection.
+HikariCP checks idle connections.
+If available → returns connection.
+If not → creates new connection if pool < max.
+Else → waits up to connectionTimeout.
+Connection used by application.
+Connection returned → validated and reused.
+Housekeeping removes idle/expired connections.
+
+8. Advantages Over Other Pools
+########################################
+
+Feature	               HikariCP	    TomcatCP	  DBCP2
+Performance	           Very high	  Moderate	  Moderate
+Lightweight	             ✅	          ❌	        ❌
+Leak Detection	         ✅	          ✅	        ❌
+Metrics	                 ✅	          Limited	    Limited
+Startup Time	          Fast	        Moderate	  Moderate
+
+9. Debugging & Logging
+#################################
+
+Enable debug logs for connection pool activity:
+logging.level.com.zaxxer.hikari=DEBUG
+
+
+You can see:
+Connection borrow/return
+Pool creation and closing
+Idle/expired connection removal
+
+10. Summary
+
+HikariCP is a high-performance, reliable, and lightweight connection pool.
+Spring Boot makes integration seamless.
+
+Customization allows full control over performance, stability, and monitoring.
