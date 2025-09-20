@@ -121,6 +121,9 @@ spring.datasource.driver-class-name=org.postgresql.Driver
 # HikariCP Configuration
 #############################
 
+# Name of the connection pool (useful in logs)
+spring.datasource.hikari.pool-name=MyHikariPool
+
 # Maximum number of connections in the pool
 spring.datasource.hikari.maximum-pool-size=15
 
@@ -140,9 +143,6 @@ spring.datasource.hikari.idle-timeout=600000
 # Detect connections that are not returned within this time (ms)
 # Useful for debugging connection leaks
 spring.datasource.hikari.leak-detection-threshold=2000
-
-# Name of the connection pool (useful in logs)
-spring.datasource.hikari.pool-name=MyHikariPool
 
 # Time allowed for a connection validation check (ms)
 spring.datasource.hikari.validation-timeout=5000
