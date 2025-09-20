@@ -7,11 +7,8 @@ HikariCP is a high-performance JDBC connection pool widely used in Spring Boot a
 Key Benefits:
 
 Reduces connection creation overhead
-
 Improves application performance
-
 Provides connection leak detection
-
 Lightweight and fast compared to other connection pools
 
 2. Why Use Connection Pooling?
@@ -83,8 +80,9 @@ validationTimeout	Connection validation timeout	5,000 ms
 connectionTestQuery	Optional SQL query to validate connections	Not required for most DBs
 
 
-6. Customization Examples
-###################################
+6. Customization Examples  
+1. By Setting configuration details in HikariConfg object
+########################################################
 
 Programmatic Bean Configuration
 import com.zaxxer.hikari.HikariConfig;
@@ -109,6 +107,62 @@ public class DataSourceConfig {
         return new HikariDataSource(config);
     }
 }
+2. By adding config properties in appln.prop file.
+##################################################
+
+# Database Connection
+#############################
+spring.datasource.url=jdbc:postgresql://localhost:5432/XXXXXX
+spring.datasource.username=XXXXXXXXX
+spring.datasource.password=XXXXXXXXX
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+#############################
+# HikariCP Configuration
+#############################
+
+# Maximum number of connections in the pool
+spring.datasource.hikari.maximum-pool-size=15
+
+# Minimum number of idle connections kept ready in the pool
+spring.datasource.hikari.minimum-idle=5
+
+# Maximum time to wait for a connection from the pool (ms)
+spring.datasource.hikari.connection-timeout=30000
+
+# Maximum lifetime of a connection in the pool (ms)
+# Prevents stale connections from lingering
+spring.datasource.hikari.max-lifetime=1800000
+
+# Maximum idle time for a connection before it is removed from the pool (ms)
+spring.datasource.hikari.idle-timeout=600000
+
+# Detect connections that are not returned within this time (ms)
+# Useful for debugging connection leaks
+spring.datasource.hikari.leak-detection-threshold=2000
+
+# Name of the connection pool (useful in logs)
+spring.datasource.hikari.pool-name=MyHikariPool
+
+# Time allowed for a connection validation check (ms)
+spring.datasource.hikari.validation-timeout=5000
+
+# Optional: SQL query to validate connections
+# spring.datasource.hikari.connection-test-query=SELECT 1
+
+#############################
+# Logging (Optional)
+#############################
+# Enable debug logging for HikariCP to see connection borrow/return activity
+logging.level.com.zaxxer.hikari=DEBUG
+
+####################################################################################
+maximum-pool-size → depends on DB max connections and expected concurrent users.
+minimum-idle → usually 30–50% of max pool size.
+connection-timeout → prevents requests from waiting indefinitely.
+max-lifetime vs idle-timeout → ensure idle-timeout < max-lifetime.
+leak-detection-threshold → useful for development, can be disabled in production.
+connection-test-query → only needed for some older databases; HikariCP uses JDBC isValid() by default.
 
 Best Practices
 #####################################
